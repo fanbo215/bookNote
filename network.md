@@ -10,6 +10,11 @@
 | :------------- | :--------------- |
 | myname         | 用户名（可选）   |
 | mypass         | 密码（可选）     |
+| www.vimer.cn   | 主机网路地址     |
+| 80             | 端口号（可选）   |
+| /mydir/myfile.html | 资源字符串（可选） |
+| myvar=myvalue  | 查询字符串（可选）|
+| myfrag         | 锚点             |
 
 ## AFNetworking
 1. 如何上传图片
