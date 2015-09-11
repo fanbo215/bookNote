@@ -7,7 +7,7 @@
 > http://myname:mypasss@www.vimer.cn:80/mydir/myfile.html?myvar=myvalue#myfrag
 
 | URI部分        | 意义             |
-|: ------------- | :-----------    |
+| :------------- | :--------------- |
 | myname         | 用户名（可选）   |
 | mypass         | 密码（可选）     |
 
