@@ -48,133 +48,73 @@
 * CONNECT
   * 预留给能够将连接改为管道方式的代理服务器
 * 一个GET请求的实例如下：
-![http get](/resource/network/getRequest.bmp)
-一个HTTP响应实例如下：
-
-每个响应由HTTP协议头和web内容构成。web服务器收到一个请求，就会立刻解释请求中所用到的方法，并开始处理应答。服务器响应消息也包含头字段形式的协议头。
-其格式为：
-Status-Line*
-（（general-header)|response-header|entity-header)CRLF)
-CRLF
-[message-body]
-响应消息的第一行是状态行（Status－Line），由协议版本及数字状态码和相关的文本短语组成，各部分间用空格符隔开
-HTTP响应状态码
-状态码
-
-定义
-
-1xx 报告
-
-接收到请求，继续进程
-
-2xx 成功
-
-步骤成功接收，被理解，并被接受
-
-3xx 重定向
-
-为了完成请求,必须采取进一步措施
-
-4xx 客户端出错
-
-请求包括错的顺序或不能完成
-
-5xx 服务器出错
-
-服务器无法完成显然有效的请求
+  * ![http get](/resource/network/getRequest.bmp)
+#### 响应
+* 一个HTTP响应实例如下：
+  * ![http responst](/response/network/httpResponse.bmp)
+* 每个响应由HTTP协议头和web内容构成。web服务器收到一个请求，就会立刻解释请求中所用到的方法，并开始处理应答。服务器响应消息也包含头字段形式的协议头。
+* 其格式为：
+> Status-Line*
+> （（general-header)|response-header|entity-header)CRLF)
+> CRLF
+> [message-body]
+* 响应消息的第一行是状态行（Status－Line），由协议版本及数字状态码和相关的文本短语组成，各部分间用空格符隔开
+* HTTP响应状态码
+| 状态码 |                            定义 |
+| :----- | :------------------------------ |
+| 1xx    | 报告 (接收到请求，继续进程)    |
+| 2xx    | 成功 (步骤成功接收，被理解，并被接受) |
+| 3xx    | 重定向 (为了完成请求,必须采取进一步措施) |
+| 4xx    | 客户端出错 (请求包括错的顺序或不能完成) |
+| 5xx    | 服务器出错 (服务器无法完成显然有效的请求) |
 下面列举了为HTTP/1.1定义的状态码值，和对应的原因短语（Reason-Phrase）的例子。
 
-l  客户端错误
-
-“100″ : Continue  继续
-
-“101″ : witching Protocols  交换协议
-
-l  成功
-
-“200″ : OK
-
-“201″ : Created 已创建
-
-“202″ : Accepted 接收
-
-“203″ : Non-Authoritative Information 非认证信息
-
-“204″ : No Content 无内容
-
-“205″ : Reset Content 重置内容
-
-“206″ : Partial Content 部分内容
-
-l  重定向
-
-“300″ : Multiple Choices 多路选择
-
-“301″ : Moved Permanently  永久转移
-
-“302″ : Found 暂时转移
-
-“303″ : See Other 参见其它
-
-“304″ : Not Modified 未修改
-
-“305″ : Use Proxy 使用代理
-
-“307″ : Temporary Redirect
-
-l  客户方错误
-
-“400″ : Bad Request 错误请求
-
-“401″ : Unauthorized 未认证
-
-“402″ : Payment Required 需要付费
-
-“403″ : Forbidden 禁止
-
-“404″ : Not Found 未找到
-
-“405″ : Method Not Allowed 方法不允许
-
-“406″ : Not Acceptable 不接受
-
-“407″ : Proxy Authentication Required 需要代理认证
-
-“408″ : Request Time-out 请求超时
-
-“409″ : Conflict 冲突
-
-“410″ : Gone 失败
-
-“411″ : Length Required 需要长度
-
-“412″ : Precondition Failed 条件失败
-
-“413″ : Request Entity Too Large 请求实体太大
-
-“414″ : Request-URI Too Large 请求URI太长
-
-“415″ : Unsupported Media Type 不支持媒体类型
-
-“416″ : Requested range not satisfiable
-
-“417″ : Expectation Failed
-
-l  服务器错误
-
-“500″ : Internal Server Error 服务器内部错误
-
-“501″ : Not Implemented 未实现
-
-“502″ : Bad Gateway 网关失败
-
-“503″ : Service Unavailable
-
-“504″ : Gateway Time-out 网关超时
-
-“505″ : HTTP Version not supported  HTTP版本不支持
-
-HTTP状态码是可扩展的。
+* 客户端错误
+> “100″ : Continue  继续
+> “101″ : witching Protocols  交换协议
+*  成功
+> “200″ : OK
+> “201″ : Created 已创建
+> “202″ : Accepted 接收
+> “203″ : Non-Authoritative Information 非认证信息
+> “204″ : No Content 无内容
+> “205″ : Reset Content 重置内容
+> “206″ : Partial Content 部分内容
+*  重定向
+> “300″ : Multiple Choices 多路选择
+> “301″ : Moved Permanently  永久转移
+> “302″ : Found 暂时转移
+> “303″ : See Other 参见其它
+> “304″ : Not Modified 未修改
+> “305″ : Use Proxy 使用代理
+> “307″ : Temporary Redirect
+* 客户方错误
+> “400″ : Bad Request 错误请求
+> “401″ : Unauthorized 未认证
+> “402″ : Payment Required 需要付费
+> “403″ : Forbidden 禁止
+> “404″ : Not Found 未找到
+> “405″ : Method Not Allowed 方法不允许
+> “406″ : Not Acceptable 不接受
+> “407″ : Proxy Authentication Required 需要代理认证
+> “408″ : Request Time-out 请求超时
+> “409″ : Conflict 冲突
+> “410″ : Gone 失败
+> “411″ : Length Required 需要长度
+> “412″ : Precondition Failed 条件失败
+> “413″ : Request Entity Too Large 请求实体太大
+> “414″ : Request-URI Too Large 请求URI太长
+> “415″ : Unsupported Media Type 不支持媒体类型
+> “416″ : Requested range not satisfiable
+> “417″ : Expectation Failed
+*  服务器错误
+> “500″ : Internal Server Error 服务器内部错误
+> “501″ : Not Implemented 未实现
+> “502″ : Bad Gateway 网关失败
+> “503″ : Service Unavailable
+> “504″ : Gateway Time-out 网关超时
+> “505″ : HTTP Version not supported  HTTP版本不支持
+* HTTP状态码是可扩展的。
 
 
 ## AFNetworking
