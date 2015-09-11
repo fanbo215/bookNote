@@ -4,7 +4,7 @@
 * 应用层的面向对象的协议，目前版本号1.1
 * 基于请求和响应模式的，无状态的应用层协议，常基于tcp的连接方式
 
-### URL
+### URI
 * 通过URI（uniform resource identifiers）来访问资源。
 
 > http://myname:mypasss@www.vimer.cn:80/mydir/myfile.html?myvar=myvalue#myfrag
