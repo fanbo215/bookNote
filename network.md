@@ -48,11 +48,15 @@
 * CONNECT
   * 预留给能够将连接改为管道方式的代理服务器
 * 一个GET请求的实例如下：
-  * ![http get](/resource/network/getRequest.bmp)
+<p align="center">
+  ![http get](/resource/network/getRequest.bmp)
+</p>
 
 #### 响应
 * 一个HTTP响应实例如下：
-  * ![http responst](/resource/network/httpResponse.bmp)
+<p align="center">
+  ![http responst](/resource/network/httpResponse.bmp)
+</p>
 * 每个响应由HTTP协议头和web内容构成。web服务器收到一个请求，就会立刻解释请求中所用到的方法，并开始处理应答。服务器响应消息也包含头字段形式的协议头。
 * 其格式为：
 
