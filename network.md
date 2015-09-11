@@ -65,7 +65,8 @@
 > [message-body]
 
 * 响应消息的第一行是状态行（Status－Line），由协议版本及数字状态码和相关的文本短语组成，各部分间用空格符隔开
-* HTTP响应状态码
+
+##### HTTP响应状态码
 
 | 状态码 |                            定义 |
 | :----- | :------------------------------ |
@@ -76,13 +77,13 @@
 | 5xx    | 服务器出错 (服务器无法完成显然有效的请求) |
 
 * 下面列举了为HTTP/1.1定义的状态码值，和对应的原因短语（Reason-Phrase）的例子。
-* 客户端错误
+##### 客户端错误
 
 > “100″ : Continue  继续
 
 > “101″ : witching Protocols  交换协议
 
-*  成功
+#####  成功
 
 > “200″ : OK
 
@@ -98,7 +99,7 @@
 
 > “206″ : Partial Content 部分内容
 
-*  重定向
+#####  重定向
 
 > “300″ : Multiple Choices 多路选择
 
@@ -114,7 +115,7 @@
 
 > “307″ : Temporary Redirect
 
-* 客户方错误
+##### 客户方错误
 
 > “400″ : Bad Request 错误请求
 
@@ -152,7 +153,7 @@
 
 > “417″ : Expectation Failed
 
-*  服务器错误
+##### 服务器错误
 
 > “500″ : Internal Server Error 服务器内部错误
 
@@ -166,7 +167,7 @@
 
 > “505″ : HTTP Version not supported  HTTP版本不支持
 
-* HTTP状态码是可扩展的。
+#### HTTP状态码是可扩展的。
 
 
 ## AFNetworking
