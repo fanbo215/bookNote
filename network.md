@@ -49,6 +49,7 @@
   * 预留给能够将连接改为管道方式的代理服务器
 * 一个GET请求的实例如下：
   * ![http get](/resource/network/getRequest.bmp)
+
 #### 响应
 * 一个HTTP响应实例如下：
   * ![http responst](/resource/network/httpResponse.bmp)
