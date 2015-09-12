@@ -176,7 +176,7 @@
 
 
 ## AFNetworking
-1. 如何上传图片
+1. 如何上传图片文件
 
 ```
 - (void)uploadImage:(id)image
@@ -202,6 +202,3 @@
     [operation start];
 }
 ```
-
-2. 如何上传文件
-
