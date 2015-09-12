@@ -177,5 +177,31 @@
 
 ## AFNetworking
 1. 如何上传图片
+
+```
+- (void)uploadImage:(id)image
+            success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+            failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure {
+    NSData *imageData = UIImageJPEGRepresentation(image, 0.95);
+    
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.dateFormat = @"yyyyMMddHHmmss";
+    NSString *str = [formatter stringFromDate:[NSDate date]];
+    NSString *fileName = [NSString stringWithFormat:@"%@.jpg", str];
+    NSString *URLString = [NSString stringWithFormat:@"%@/images/upload", kISBaseURL];
+
+    NSMutableURLRequest *request = [self.manager.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:URLString parameters:@{@"uid": [ISUserInfoManager shareInstance].currentUser.uid}  constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+        [formData appendPartWithFileData:imageData name:@"userimg" fileName:fileName mimeType:@"image/jpeg"];
+    } error:nil];
+    AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+    [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+        if (success) {
+            success(operation, operation.responseString);
+        }
+    } failure:failure];
+    [operation start];
+}
+```
+
 2. 如何上传文件
 
