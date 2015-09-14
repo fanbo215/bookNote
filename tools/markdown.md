@@ -95,9 +95,9 @@
 		`   backtick
 		*   asterisk
 		_   underscore
-		{\}  curly braces
-		[\]  square brackets
-		(\)  parentheses
+		{}  curly braces
+		[]  square brackets
+		()  parentheses
 		#   hash mark
 		+   plus sign
 		-   minus sign (hyphen)
