@@ -64,7 +64,7 @@
 ## 图片
 * \!\[\]\(\)
 
-例如: ![Mon icon] (http://www.mouapp.com/Mon_128.png)
+例如: ![Mon icon] (../resource/markdown/ic_pk_red@3x.png)
 
 ## 粗体
 * 用两个＊包含一段文本
