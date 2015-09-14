@@ -87,3 +87,18 @@
 ## 分割线
 * 三个＊号
 ## 可以直接在markdown中内嵌html格式
+
+# 转义
+> 如下都会被转义
+\   backslash
+`   backtick
+*   asterisk
+_   underscore
+{}  curly braces
+[]  square brackets
+()  parentheses
+#   hash mark
++   plus sign
+-   minus sign (hyphen)
+.   dot
+!   exclamation mark
