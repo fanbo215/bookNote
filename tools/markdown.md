@@ -82,7 +82,7 @@
 * 多行代码用```包裹
 * 通过缩紧一个tab或4个空格，可以产生code 引用，例如：
 
-	[[UIView alloc] init];
+		[[UIView alloc] init];
 
 ## 分割线
 * 三个＊号
