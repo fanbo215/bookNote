@@ -141,6 +141,42 @@ CATransform3DMakeTranslation(Gloat tx, CGFloat ty, CGFloat tz)
 * **sublayerTransform**，对于所有的子图层，可以通过设置这个值来统一所有子layer的视角
 * **doubleSided**用来控制是否显示双面
 
+### 特殊的图层
+#### CAShapeLayer
+* 使用矢量图形而不是位图，通过颜色和线宽属性来定义一个CGPath，CAShapeLayer会自动渲染它
+* 特点
+	* 快速，使用硬件加速来绘制
+	* 内存空间省
+	* 可以再边界外面绘制
+	* 没有像素化
+* 通过它可以实现可定制圆角
+//define path parameters
+CGRect rect = CGRectMake(50, 50, 100, 100); 
+CGSize radii = CGSizeMake(20, 20); 
+UIRectCorner corners = UIRectCornerTopRight |
+		    UIRectCornerBottomRight | 
+		     UIRectCornerBottomLeft;
+//create path
+UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:rect byRoundingCorners:corners cornerRadii:radii];
 
+#### CATextLayer
+* CATextLayer渲染比UILabel快
+* rich text
 
+#### CATransformLayer
 
+#### CGGradientLayer
+* 用于生产平滑过度的颜色渐变
+
+#### CAReplicatorLayer
+* 用于高效生产一组相似的layer
+
+#### CAScrollLayer
+
+#### CATiledLayer
+* 逐块显示
+
+#### CAEmitterLayer
+* 显示离子或火焰等效果
+
+#### AVPlayerLayer
