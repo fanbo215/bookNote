@@ -180,3 +180,11 @@ UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:rect byRoundingCorn
 * 显示离子或火焰等效果
 
 #### AVPlayerLayer
+
+### 瘾式动画
+* 所有屏幕上的元素都可能有动画，如果你不想要动画，需要显式关掉动画
+* 动画的时间有当前的transaction设置，动画类型有layer的actions控制
+* transaction是一种机制，核心动画用它来封装一组属性动画，任何可以动画的属性值改变时，一个给定的transaction不会立刻改变，而是只有当这个transaction被提交时才开始动画到新的值
+* transaction由CATransaction类管理，该类管理一个堆栈的transactions，不能直接创建transaction，只能通过begin压栈一个transaction和commit出栈一个transaction
+* 核心动画自动在每个run loop中开始一个新的transaction，任何动画属性值改变时，都会分组到这个transaction中，并且会动画0.25s
+
