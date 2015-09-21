@@ -11,7 +11,7 @@
 ### python
 
 ## technology
-### network
+### ~~network~~
 ### cocoa touch
 ### runtime
 ### instruments
