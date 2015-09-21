@@ -21,3 +21,33 @@
 * **- (void)displayLayer:(CALayerCALayer *)layer;**当需要重绘时，可以通过这个接口来设置它的*contents*，然后就不会调别的接口了。如果没有实现这个接口会调用**- (void)drawLayer:(CALayer *)layer inContext:(CGContextRef)ctx;**在调用这个接口前，CALayer会创建一个空的合适大小的图用于在上面绘制
 * 对于使用了代理的layer，需要用户手动调用**display**来更新；另外，*masksToBounds*属性默认会enable，因为绘制的上下文限定了绘制区域
 * 当使用视图的layer时，没必要实现*-displayLayer:*或*-drawLayer:inContext:*在图层的寄宿图上绘制；只需实现*-drawRect:* ，UIView会处理好这一切，包括在需要的时候调用-display
+
+### 图层几何学
+* **frame**表示layer在外部的坐标，即它在父layer中占的空间；bounds表示内部坐标，｛0，0｝表示的是左上角，position表示的是与父layer相关的一个锚点
+* 当操作view的frame，bounds和center时，实际是在操作layer的对应的属性
+* frame是个虚拟属性，它是通过bounds，position和transform计算而成，对这些属性的改变会影响到frame，同理，修改frame也会影响到这些属性
+* anchorPoint即锚点，是用来移动layer的句柄。它控制layer的frame位置，默认下，锚点位于layer的中心。锚点的作用主要是用在对layer做变换时使用，起到支点的作用，如以这点为支点进行旋转点，缩放点，平移点等
+* position是layer中anchorPosition点在父layer中的位置坐标，因此position点是相对父layer的，anchorPoint是相对layer的，两者是相对不同的坐标空间的一个重合点。position是根据anchorPoint来确定的。
+* anchorPoint的默认值是（0.5，0.5），也是anchorPoint默认在layer的中心点。使用addSublayer函数添加layer时，如果已知layer的frame值，position值可以计算如下：
+
+```
+position.x = frame.origin.x + 0.5 * bounds.size.width;
+position.y = frame.origin.y + 0.5 * bounds.size.height;
+```
+
+这个中间的0.5是因为anchorPoint取默认值，更通用的公式是：
+
+```
+position.x = frame.origin.x + anchorPoint.x * bounds.size.width;
+position.y = frame.origin.y + anchorPoint.y * bounds.size.height;
+```
+
+如果单方面修改layer的position位置不会对anchorPosition产生影响，同理，如果修改anchorPosition也不会影响position；受影响的只是frame.origin，即layer相对与父layer的坐标原点
+
+```
+frame.origin.x = position.x - anchorPosition.x * bounds.size.width;
+frame.origin.y = position.y - chanorPosition.y * bounds.size.height;
+```
+
+这就是为什么修改anchorPoint会移动layer，因为position不受影响，只能是frame.origin做相应的改变，因而会移动layer
+> [anchorPoint, frame, positon](http://wonderffee.github.io/blog/2013/10/13/understand-anchorpoint-and-position/)
