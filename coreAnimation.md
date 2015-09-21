@@ -63,7 +63,17 @@ frame.origin.y = position.y - chanorPosition.y * bounds.size.height;
 - (CGRect)convertRect:(CGRect)rect toLayer:(CALayer *)layer;
 ```
 
-* 坐标系翻转，对于iOS而言，设置某个layer的geometryFlipped为YES意味着它的父layer的坐标系将会垂直翻转，这个翻转会一直影响到它的所有子layer，直到某个geometryFlipped的设为YES
-* UIView是二维的，CALayer是三维的。用zPosition可以改变layer的显示顺序
-* 通过-containsPoint: and -hitTest:来判断某个点是否在在指定的layer中，**注意在layer的顺序**
-* CALayer没有自动布局，对于需要动态调整layer大小的情况，可以通过CALayerDelegate的- (void)layoutSublayersOfLayer:(CALayer *)layer;接口实现，当layer的bounds改变或者-setNeedsLayout被调用的时候，这个接口会被调用，让你有机会重新布局或改变所有相关layer的大小
+* 坐标系翻转，对于iOS而言，设置某个layer的*geometryFlipped*为YES意味着它的父layer的坐标系将会垂直翻转，这个翻转会一直影响到它的所有子layer，直到某个*geometryFlipped*的设为YES
+* UIView是二维的，CALayer是三维的。用*zPosition*可以改变layer的显示顺序
+* 通过*-containsPoint:* and *-hitTest:*来判断某个点是否在在指定的layer中，**注意在layer的顺序**
+* CALayer没有自动布局，对于需要动态调整layer大小的情况，可以通过*CALayerDelegate*的*- (void)layoutSublayersOfLayer:(CALayer *)layer;*接口实现，当layer的*bounds*改变或者*-setNeedsLayout*被调用的时候，这个接口会被调用，让你有机会重新布局或改变所有相关layer的大小
+
+### 可视效果
+* 圆角**cornerRadius**，默认情况下，这个圆角只会影响layer的背景色，不会影响laye的图片和子layer，如果*masksToBounds*为YES的话，所有layer里面的内容都会收到影响
+* layer的边缘线**borderWidth**和**borderColor**，该边缘线绘制在边界内，该内容层最上层，高于子layer。layer的边缘线不会考虑layer的内容或者子图层
+* 向下的阴影，用来表示视图的深度，*shadowOpacity*，*shadowColor*，*shadowOffset*，*shadowRadius*，*shadowRadius*
+* layer的阴影考虑的图形的内容
+* **mask**属性，定义了他的父图层的可见区域；*mask*的颜色被忽略了，它只关心轮廓
+* 缩放过滤，当一幅图片需要显示不同的尺寸时，一个算法（缩放过滤）会应用到图片上，实际像素映射到显示的像素上
+* **minificationFilter**表示压缩显示，**magnificationFilter**表示放大显示，默认的算法都是*kCAFilterLinear*，对于没有斜线显示的小图，*kCAFilterNearest*效果最好
+* 对于透明度，用*opacity*，这个透明度会影响自己layer和所有子layer，如果想让所有的子图层有一致的显示效果，可以使用**shouldRasterize**，它让layer和子layer在应用opaity前融合，另外需要调整**rasterizationScale**
