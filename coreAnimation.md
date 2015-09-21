@@ -30,24 +30,40 @@
 * **position**是layer中*anchorPosition*点在父layer中的位置坐标，因此*position*点是相对父layer的，*anchorPoint*是相对layer的，两者是相对不同的坐标空间的一个重合点。*position*是根据*anchorPoint*来确定的。
 * **anchorPoint**的默认值是（0.5，0.5），也是*anchorPoint*默认在layer的中心点。使用*addSublayer*函数添加layer时，如果已知layer的*frame*值，*position*值可以计算如下：
 
-	```
-	position.x = frame.origin.x + 0.5 * bounds.size.width;
-	position.y = frame.origin.y + 0.5 * bounds.size.height;
-	```
+```
+position.x = frame.origin.x + 0.5 * bounds.size.width;
+position.y = frame.origin.y + 0.5 * bounds.size.height;
+```
 
-	这个中间的0.5是因为*anchorPoint*取默认值，更通用的公式是：
+这个中间的0.5是因为*anchorPoint*取默认值，更通用的公式是：
 
-	```
-	position.x = frame.origin.x + anchorPoint.x * bounds.size.width;
-	position.y = frame.origin.y + anchorPoint.y * bounds.size.height;
-	```
+```
+position.x = frame.origin.x + anchorPoint.x * bounds.size.width;
+position.y = frame.origin.y + anchorPoint.y * bounds.size.height;
+```
 
-	如果单方面修改layer的*position*位置不会对*anchorPosition*产生影响，同理，如果修改*anchorPosition*也不会影响*position*；受影响的只是*frame.origin*，即layer相对与父layer的坐标原点
+如果单方面修改layer的*position*位置不会对*anchorPosition*产生影响，同理，如果修改*anchorPosition*也不会影响*position*；受影响的只是*frame.origin*，即layer相对与父layer的坐标原点
 
-	```
-	frame.origin.x = position.x - anchorPosition.x * bounds.size.width;
-	frame.origin.y = position.y - chanorPosition.y * bounds.size.height;
-	```
+```
+frame.origin.x = position.x - anchorPosition.x * bounds.size.width;
+frame.origin.y = position.y - chanorPosition.y * bounds.size.height;
+```
 
-	这就是为什么修改*anchorPoint*会移动layer，因为*position*不受影响，只能是*frame.origin*做相应的改变，因而会移动layer
-	> [anchorPoint, frame, positon](http://wonderffee.github.io/blog/2013/10/13/understand-anchorpoint-and-position/)
+这就是为什么修改*anchorPoint*会移动layer，因为*position*不受影响，只能是*frame.origin*做相应的改变，因而会移动layer
+
+* 更多关于frame，anchorPoint和postion的参考如下：
+> [anchorPoint, frame, positon](http://wonderffee.github.io/blog/2013/10/13/understand-anchorpoint-and-position/)
+
+* CALayer提供了在不同layer之间转换坐标系的接口
+
+```
+- (CGPoint)convertPoint:(CGPoint)point fromLayer:(CALayer *)layer; 
+- (CGPoint)convertPoint:(CGPoint)point toLayer:(CALayer *)layer; 
+- (CGRect)convertRect:(CGRect)rect fromLayer:(CALayer *)layer;
+- (CGRect)convertRect:(CGRect)rect toLayer:(CALayer *)layer;
+```
+
+* 坐标系翻转，对于iOS而言，设置某个layer的geometryFlipped为YES意味着它的父layer的坐标系将会垂直翻转，这个翻转会一直影响到它的所有子layer，直到某个geometryFlipped的设为YES
+* UIView是二维的，CALayer是三维的。用zPosition可以改变layer的显示顺序
+* 通过-containsPoint: and -hitTest:来判断某个点是否在在指定的layer中，**注意在layer的顺序**
+* CALayer没有自动布局，对于需要动态调整layer大小的情况，可以通过CALayerDelegate的- (void)layoutSublayersOfLayer:(CALayer *)layer;接口实现，当layer的bounds改变或者-setNeedsLayout被调用的时候，这个接口会被调用，让你有机会重新布局或改变所有相关layer的大小
