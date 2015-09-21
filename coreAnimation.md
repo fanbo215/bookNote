@@ -77,3 +77,70 @@ frame.origin.y = position.y - chanorPosition.y * bounds.size.height;
 * 缩放过滤，当一幅图片需要显示不同的尺寸时，一个算法（缩放过滤）会应用到图片上，实际像素映射到显示的像素上
 * **minificationFilter**表示压缩显示，**magnificationFilter**表示放大显示，默认的算法都是*kCAFilterLinear*，对于没有斜线显示的小图，*kCAFilterNearest*效果最好
 * 对于透明度，用*opacity*，这个透明度会影响自己layer和所有子layer，如果想让所有的子图层有一致的显示效果，可以使用**shouldRasterize**，它让layer和子layer在应用opaity前融合，另外需要调整**rasterizationScale**
+
+### 变换
+* 仿射变换，是二维变换，仿射的含义是对于平行的边在变换后仍然保持平行
+* 创建一个仿射矩阵
+
+```
+CGAffineTransformMakeRotation(CGFloat angle)
+CGAffineTransformMakeScale(CGFloat sx, CGFloat sy) 
+CGAffineTransformMakeTranslation(CGFloat tx, CGFloat ty)
+```
+
+例如：
+
+```
+//rotate the layer 45 degrees
+CGAffineTransform transform = CGAffineTransformMakeRotation(M_PI_4);
+self.layerView.layer.affineTransform = transform;
+```
+
+* 在一个已有的变换上继续变换
+
+```
+CGAffineTransformRotate(CGAffineTransform t, CGFloat angle) 
+CGAffineTransformScale(CGAffineTransform t, CGFloat sx, CGFloat sy) 
+CGAffineTransformTranslate(CGAffineTransform t, CGFloat tx, CGFloat ty)
+```
+
+* 常量矩阵 CGAffineTransformIdentity
+* 将两个矩阵连接成一个新的矩阵
+`CGAffineTransformConcat(CGAffineTransform t1, CGAffineTransform t2);`
+* **对于连续的变换，后面的矩阵受到前面变换矩阵的影响**，如先缩放50%，再旋转30度，再平移200，实际上该layer会跑到它的右下角去。因为200的平移是先缩小50%，再旋转了30度的结果
+* 斜切变换
+
+```
+CGAffineTransform CGAffineTransformMakeShear(CGFloat x, CGFloat y) {
+	CGAffineTransform transform = CGAffineTransformIdentity; transform.c = -x;
+	transform.b = y;
+	return transform;
+}
+- (void)viewDidLoad {
+	[super viewDidLoad];
+	//shear the layer at a 45-degree angle
+	self.layerView.layer.affineTransform = CGAffineTransformMakeShear(1, 0); 
+}
+```
+
+#### 3D变换
+* layer的**transform**属性是**CATransform3D**类型
+* 创建3D变换矩阵
+
+```
+CATransform3DMakeRotation(CGFloat angle, CGFloat x, CGFloat y, CGFloat z) 
+CATransform3DMakeScale(CGFloat sx, CGFloat sy, CGFloat sz) 
+CATransform3DMakeTranslation(Gloat tx, CGFloat ty, CGFloat tz)
+```
+
+*旋转满足左手定理
+![1.png](resource/coreAnimation/1.png)
+* 投射视角，为了让我们感觉到远的东西比进的东西小一些，我们需要调整视角变换，即z变换，调整的参数如图m34
+![2.png](resource/coreAnimation/2.png) 
+默认条件下，m34为0，我们可以设置该值为-1.0/d，这个d表示的是想象的照相机到屏幕的距离，通常可以设置再500到1000之间
+* **sublayerTransform**，对于所有的子图层，可以通过设置这个值来统一所有子layer的视角
+* **doubleSided**用来控制是否显示双面
+
+
+
+
