@@ -203,3 +203,152 @@ UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:rect byRoundingCorn
 	* 动画中的layer响应用户输入
 
 ### 显式动画
+* 显式动画可以让你针对某个属性自定义动画或创建非线性动画
+* 第一种显式动画为属性动画，有两种形式，基本的和关键帧
+* 一个动画就是一个改变持续了一段时间，最简单的改变就是由一个值变为另一个值，这就是CABasicAnimation的涉及初衷
+* CABasicAnimation扩展了CAPropertyAnimation，`id fromValue, id toValue, id byValue`, 这三个值只需指定两个即可
+
+|Type Object Type | Code Example|
+|:---------------:|-------------|
+|CGFloat NSNumber | id obj = @(float);|
+|CGPoint NSValue  |id obj = [NSValue valueWithCGPoint:point); |
+|CGSize NSValue   |id obj = [NSValue valueWithCGSize:size);|
+|CGRect NSValue   |id obj = [NSValue valueWithCGRect:rect);|
+|CATransform3D NSValue |id obj = [NSValue valueWithCATransform3D:transform);|
+|CGImageRef id    |id obj = (__bridge id)imageRef;|
+|CGColorRef id    |id obj = (__bridge id)colorRef;|
+
+* 动画不会修改layer的model，只是修改它的presentation
+
+```
+- (IBAction)changeColor {
+	CGFloat red = arc4random() / (CGFloat)INT_MAX; 
+	CGFloat green = arc4random() / (CGFloat)INT_MAX; 
+	CGFloat blue = arc4random() / (CGFloat)INT_MAX; 
+	UIColor *color = [UIColor colorWithRed:red green:green blue:blue alpha:1.0];
+	//create a basic animation
+	CABasicAnimation *animation = [CABasicAnimation animation]; 
+	animation.keyPath = @"backgroundColor";
+	animation.toValue = (__bridge id)color.CGColor;
+	//apply animation to layer
+	[self.colorLayer addAnimation:animation forKey:nil];
+}
+```
+
+* 如果将我们的动画做成一个layer的action，那么它可以通过改变属性来触发动画，这是最简单的一种做法。并且可以保持属性值和动画状态一致。如果我们不能做到这点的画，我们需要及时更新属性值，通常有两种情况，一是动画前，一是动画后
+
+```
+CALayer *layer = self.colorLayer.presentationLayer ?: self.colorLayer; 
+animation.fromValue = (__bridge id)layer.backgroundColor; 
+[CATransaction begin];
+[CATransaction setDisableActions:YES]; 
+self.colorLayer.backgroundColor = color.CGColor;
+[CATransaction commit];
+```
+
+* 一条较好的可扩展的添加一个动画的方法
+
+```
+- (void)applyBasicAnimation:(CABasicAnimation *)animation toLayer:(CALayer *)layer
+￼{	
+	//set the from value (using presentation layer if available)
+	animation.fromValue = [layer.presentationLayer ?: layer valueForKeyPath:animation.keyPath];
+	//update the property in advance
+	//note: this approach will only work if toValue != nil [CATransaction begin];
+	[CATransaction setDisableActions:YES];
+	[layer setValue:animation.toValue forKeyPath:animation.keyPath]; 
+	[CATransaction commit];
+	//apply animation to layer
+	[layer addAnimation:animation forKey:nil]; 
+}
+```
+
+在显式动画中，如何判断一个动画是否已经做完，可以通过*CAAnimationDelegate*的`-animationDidStop:finished:`来做到。并且如果我们给输入参数`CABasicAnimation`添加key值的话，我们将可以通过该值来访问我们的值。
+
+* 关键帧动画
+有*CAKeyframeAnimation*定义，属性动画的一种，它不像*CABasicAnimation*那样只限定了开始和结束，而是可以给出任意多个序列。在关键帧动画中，主动画只负责绘制一些关键的帧，一些不是很关键的帧由不是高水平的画家来绘制。同理，程序员只提供一些关键帧，核心动画通过插值来补充其间的空隙
+* **CAKeyframeAnimation**有一个属性**rotationMode**，设置它为*kCAAnimationRotateAuto*，动画的方向就会沿着切线运动
+* **transform.ratation**不能直接设置这个属性，因为transform是一个结构体，没有kvc，它是虚拟属性，专门用于动画的。当你通过这些虚拟属性来动画时，核心动画会更新transfrom属性的实际值，通过一个类*CAValueFunction*。
+* **CAValueFunction**用于将一个浮点值转成*CATransform3D*中的实际值。可以通过改变*CAPropertyAnimation*中的*valueFunction*来改变默认值。
+
+* 动画组
+* 将动画拼成一组，CAAnimationGroup，通过给它的属性animations赋值实现
+
+* 过度动画
+* 针对的是布局变化，用属性动画来表示比较困难的情况，比如交换文本或图片，属性动画只能用于图层动画的属性，如果要改变不可动画的属性或增加或删掉layer，属性动画就不能用了
+* 过渡动画不是为了平滑变化，而是一种用来分心的战术。过渡动画影响整个layer而不是某个属性。过渡动画先对就的layer做一个快照，然后动画到新的外观
+* 过渡动画CATransition有type和subtype用来表示过渡效果
+
+* 瘾式过渡动画，由于过渡动画可以平湖的动画在layer上，apple将layer的contents改变设置为过渡动画，但是跟view上的layer一样，不起作用，只有在子layer上才能有效果
+
+* 自定义过渡动画
+
+```
+- (IBAction)performTransition {
+	//preserve the current view snapshot
+	UIGraphicsBeginImageContextWithOptions(self.view.bounds.size, YES, 0.0); 
+	[self.view.layer renderInContext:UIGraphicsGetCurrentContext()]; 
+	UIImage *coverImage = UIGraphicsGetImageFromCurrentImageContext();
+	//insert snapshot view in front of this one
+	UIView *coverView = [[UIImageView alloc] initWithImage:coverImage]; 
+	coverView.frame = self.view.bounds;
+	[self.view addSubview:coverView];
+	//update the view (we'll simply randomize the layer background color)
+	CGFloat red = arc4random() / (CGFloat)INT_MAX; 
+	CGFloat green = arc4random() / (CGFloat)INT_MAX; 
+	CGFloat blue = arc4random() / (CGFloat)INT_MAX; 
+	self.view.backgroundColor = [UIColor colorWithRed:red green:green blue:blue alpha:1.0];
+	//perform animation (anything you like)
+	[UIView animateWithDuration:1.0 animations:^{
+		//scale, rotate and fade the view
+		CGAffineTransform transform = CGAffineTransformMakeScale(0.01, 0.01);
+		￼
+		transform = CGAffineTransformRotate(transform, M_PI_2); 
+		coverView.transform = transform;
+		coverView.alpha = 0.0;
+	} completion:^(BOOL finished){
+		//remove the cover view now we're finished with it
+		[coverView removeFromSuperview]; 
+	}];
+}
+```
+
+在动画过程中取消动画，只要动画被移除，图层的显示马上会更新为当前model的值。当动画被做完后，如果**removedOnCompletion**没有被设为NO，动画会自动被移除
+
+### 图层时间
+* CAMediaTiming定义了一组属性用来控制动画中国年流过的时间，CALayer和CAAnimation都实现了这个协议，因此时间可以在每层和每个动画上被控制
+* duration用来描述动画中一遍所有的时间，repeatCount用来描述动画执行多少遍，repeatDuration重复多长时间，autoreverses是否反转
+* beginTime描述在动画开始前延迟多长时间，speed时间加倍因子，默认是1，对于speed为2，duration时间为1的动画，实际执行的时间为0.5s
+* timeOffset用来快速定位到动画的偏移位置
+* fillMode用来表示开始或执行完成动画后的填充模式
+* 动画的时间层次于CAAnimationGroup关联在一起
+* layer或CAGroupAnimation的duration，repeatCount/repeatDuration不会影响到子动画，beginTime，timeOffset，speed会影响到子动画
+* global time 
+* CFTimeInterval time = CACurrentMediaTime();
+
+* 用来在不同的layer之间同步动画，特别是speed，tiemoffset和beginTime不同时
+
+```
+- (CFTimeInterval)convertTime:(CFTimeInterval)t fromLayer:(CALayer *)l; 
+- (CFTimeInterval)convertTime:(CFTimeInterval)t toLayer:(CALayer *)l;
+```
+
+* 通过给layer的speed属性设置为0，调节timeOffset可以回放任意动画序列。
+
+### 缓冲
+* 系统用缓冲来平滑和自然动画
+* 动画都是以一定的速率来进行的
+* velocity ＝ change ／ time
+* 对于速度是常量的动画通常叫做线性步调
+* CAAnimation有一个属性timingFunction，用于设置缓冲函数，即速度
+* 在关键帧动画中可以通过animation.timingFunctions给不同的关键帧之间赋予不同的速度
+* CAMediaTimingFunction将输入的时间转成丛开始到结束的成比例变化。
+
+### 基于时间的动画
+* 帧时间
+* 动画看上去是在连续移动，但是当显示的像素位置固定时时不可能的。通常的显示也不能显示连续的移动。只能显示一系列连续的静态图像，只是足够块，让你感觉它在动
+* iOS每秒刷新60次，CAAnimation要做的就是计算一个新的显示帧，然后在屏幕刷新时同步绘制出来。CAAnimation做的巧妙的地方在于它加入了插值和通过缓冲计算如何显示
+* 我们也可以通过自己计算显示帧的顺序列。
+
+* CADisplayLink也是一个类似NSTimer的类，它总是在屏幕被刷新前被触发。如果漏过了调度某帧，将会忽略它，并进入下一个调度时间
+
