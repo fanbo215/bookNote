@@ -187,4 +187,19 @@ UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:rect byRoundingCorn
 * transaction是一种机制，核心动画用它来封装一组属性动画，任何可以动画的属性值改变时，一个给定的transaction不会立刻改变，而是只有当这个transaction被提交时才开始动画到新的值
 * transaction由CATransaction类管理，该类管理一个堆栈的transactions，不能直接创建transaction，只能通过begin压栈一个transaction和commit出栈一个transaction
 * 核心动画自动在每个run loop中开始一个新的transaction，任何动画属性值改变时，都会分组到这个transaction中，并且会动画0.25s
+* 当属性变化时，CALayer自动应用的动画叫做actions，当一个layer的属性被修改，它会调用自己的-actionForKey:方法，这个方法在返回action时的搜索路径为：
+	* 首先检查他的delegate是否视线了-actionForLayer:forKey方法，如果实现，则调用后返回；
+	* 如果没有代理或没有实现-actionForLayer:forKey, layer会检查actions字典，这个字典中包含了一个属性名映射的actions
+	* 如果actions没有，则继续搜索style字典
+	* 如果style还是没有，会调用-defaultActionForKey:方法，在这个里面定义了标准的属性actions
+* 如果-actionForKey:返回nil，就没有动画，否则会通过这个action进行动画
+* 对于直接修改UIView对应的layer没有动画的原因就是UIView实现了-actionForLayer:forKey方法，当不在动画block中时返回nil，否则返回非nil
+* UIView的layer主动禁止了瘾式动画，要在这上面动画，需要通过UIVIew动画方法或者子类UIVIew后然后改写-actionForLayer:forKey:来创建一个瘾式动画
+* 对于其它layer，可以通过实现-actionForLayer:forKey:或这提供actions字典
+* 当设置layer的属性时，你只是定义了一个model，属性改变时，model立刻改变，但是它的view是一个动画，不会立刻改变，而是有一个过程，即核心动画代表了controller，控制动画何时开始和结束
+* 在iOS中，屏幕每秒60次重绘。如果动画时长超过1/60s，则需要有个地方来存储中间过程的layer，这个中间过程的layer是presention layer
+* 对于presention lay需要在两种情况下处理：
+	* 实现基于时间的动画，用它来定位layer在屏幕上的位置，便于在动画中与其它元素对齐
+	* 动画中的layer响应用户输入
 
+### 显式动画
