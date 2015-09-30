@@ -352,3 +352,149 @@ self.colorLayer.backgroundColor = color.CGColor;
 
 * CADisplayLink也是一个类似NSTimer的类，它总是在屏幕被刷新前被触发。如果漏过了调度某帧，将会忽略它，并进入下一个调度时间
 
+### 性能调优
+* 让核心动画获得最佳性能是一门艺术，其关注的是让GPU和CPU能达到最佳的负载
+* 在绘制和动画中需要用到两种处理器：CPU和GPU
+* 通常，我们可以在CPU中做任何事情，但是对于GPU，由于它对图像处理中用到得并行浮点运算做了优化，使得它在图形图像方面更快。因此我们希望能将更多的屏幕渲染工作交给GPU来完成。
+* 核心动画不仅仅只是在应用内部的事情，动画和屏幕上显示的layer实际上是由一个独立的进程来处理，而不是我们的应用程序，是render service，在iOS5之前是由SpringBoard进程负责，在iOS6之后由一个新的进程叫BackBoard进程负责
+* 在执行一个动画时，可以分为4个独立的阶段：
+	* **layout**，该阶段准备你的*view／layer*的层次，设置*layer*的属性（如*frame*，*backgroundcolor*，*border*等等）
+	* **display**，layer上的图片会被绘制出来，可能会包括调用**-drawRect:**或**-drawlayer:inContext:**方法
+	* **prepare**, 该阶段核心动画会给**render server**发送动画数据。同时核心动画会执行一些任务，如解压图片，这些会在后面的动画中用到
+	* **commit**，这是最后的阶段，核心动画将*layer*和动画属性打包发给IPC来渲染显示
+* 上面的4步是发生在应用程序内部，要显示在屏幕上，还需要一些额外的工作要做。一旦这些被打包好的*layer*和动画到了**render server**进程后，他们会被解序列化成一个渲染树，**render server**就是使用这个树来做动画的每一帧：
+	* 计算的*layer*属性的中间值，建立*OpenGL*纹理切片来执行渲染
+	* 渲染屏幕上可视的三角形
+* 前5步由CPU执行，最后一步由GPU执行，我们能控制的只有前两步，剩下的由核心动画的框架接管，我们无法控制
+* GPU被优化来做下面的事情，获取图片喝物理尺寸，执行图形变换，应用纹理和混合，最后将他们显示到屏幕上；如果我们没有绕过核心动画层，在OpenGL渲染，我们只能采用一组固定的硬件加速操作集合，剩下的事情都得由CPU来完成
+* 有些事情会影响GPU的*layer*绘制：
+	* 太多的几何角，图形芯片可以处理上百万的三角形，GPU的处理能力不是瓶颈，但是在显示之前*layer*必须被预处理并发送给*render server*，太多的*layer*将会导致CPU成为瓶颈。这将会限制一次显示不了过多的*layer*
+	* 太多的重绘，这个主要是由太多的半透明图层重叠造成。GPU只有有限的填充率（指GPU用颜色填充像素的速率），因此重绘（在每帧上填充同一像素多次）是必须避免的
+	* 离屏绘制，发生在特殊的效果不能通过直接在屏幕上绘制达到，而必须首先在离屏的图形环境中绘制。离屏绘制要么采用CPU要么采用GPU绘制，但它们都需要申请额外的用于离屏图形的内存空间和切换绘制上下文，会导致GPU的性能下降。对lyer使用某些特效，如圆角，遮罩，阴影或像素化都会使得核心动画去做离屏渲染。需要注意这些地方可能会造成性能问题
+＊ 大部分的CPU工作都发生在动画发生前，因此这些工作不会影响到帧率，但它会延迟动画的开始，让你的界面感觉不能及时响应，这些行为由：
+	* layout计算，在iOS6的自动布局机制中用到复杂的视图层次
+	* lazy视图加载，如果在视图加载之前需要做大量的工作，会导致界面没有响应
+	* 核心图形绘制，实现**－drawRect:**或**－drawLayer:inContext:**会引入重要的性能问题
+	* 图形解压，*PNG*和*JPEG*都是经过压缩的位图，在这张图片被绘制前都需要解压，（长＊宽＊高＊4），为了节约内存通常会直到绘制前才解压图片
+* 访问硬件如闪存或网络接口，某些数据可能会需要加载到*flash*中，如从*nib*文件中*load*它的内容。*flash*比内存慢的多
+* 对于影响动画的因素，我们该如何避免它们？首先是先通过工具测量而不是猜测
+* 在真机上测试而不是模拟器上	
+* 使用**release**配置，而不是*debug*配置
+* 在能支持的低端设备上测试
+* 为了保持平滑的动画，需要运行在60FPS。对于采用**NSTimer**或**CADisplayLink**的动画，可以保持在30FPS上。对于掉帧的情况，会给用户体验差的感觉
+
+* Instrument
+	* **Time Profiler**，用于测量每个函数占用CPU时间
+	* 核心动画，用于测量所有种类的核心动画性能问题
+		* **Color blended Layers**，高亮屏幕中使用蒙层的地方（使用半透明layer），阴影的地方，蒙层会导致GPU性能和滚动的动画
+		* **Color Hits Green and Misses Red**，当使用shouldRasterize，耗时的layer绘制会被cached并被渲染成一幅单独的图片。该选项在这些cache被重现生成时会标成红色，如果会持续变红，说明可能会由性能问题
+		* **Color Copied Images**，有时核心动画会强迫copy主干图给render server，而不是将原图的指针发送过去，这种情况下会将这些图标成蓝色，拷贝图会耗费大量内存和CPU
+		* **Color Immediately**，通常Instrument更新layer是每10微妙一次，该选项让每帧更新一次
+		* **Color Misaligned Images**，高亮缩放显示的图片，或没有正确的边界对齐图片
+		* **Color Offscreen-Rendered Yellow**
+		* **Color OpenGL Fast Path Blue**，对于直接采用OpenGL的用蓝色高亮
+		* **Flash Updated Regions**，用黄色标志重绘的区域
+	* **OpenGL ES Driver**，用来测量GPU性能问题，通常用来测量OpenGL代码，但也可以用于核心动画
+		* **Renderer Utilization**，如果这个值高于50%，可能动画在填充率上受限了，可能上离屏渲染或overdraw造成
+		* **Tiler Utilization**，如果这个值高于50%，表明动画的几何受限，可能是由太多的图层在屏幕上
+
+### 高效绘制
+* drawing在核心动画中指利用CPU绘制，主要由Core Graphics框架完成，相对于核心动画和OpenGL要慢很多，另外也需要跟多的内存
+* 对于使用向量图形，我们可以用C**AShapeLayer**来绘制，而不是用cpu的**－drawRect**绘制
+* 对于需要采用cpu绘制的，可以限制重绘区域来减少额外的绘制，**-setNeedsDisplayInRect:**
+* CATiledLayer支持针对每个独立的tile自动更新，并且对**-drawLayer:inContext:** 可以做到并发到多个线程
+* CALayer上的**drawsAsynchronously**可以在让当前的任务行，绘制的任务会排队
+
+### 图像IO
+* 一个图片文件被加载的速度不仅受限于CPU，也受限于IO延迟。flash山村比普通的硬盘要快，但是比起RAM，还是慢了200多倍
+* 对于按下按钮到看到屏幕上有反应，用户能够忍耐的最佳延迟是**200ms**，渲染一帧的时间是**16ms**
+* 看门狗会在你的app**20s**还没有启动完成的情况下将你的app杀掉
+* 如果图片很大，对于需要滑动的界面，可能在主线程上读取图片会卡住主线程，改进的方法是将它放在其它线程
+* 一旦一个图片文件被加载，它需要被解压，这个过程也是非常耗费时间的，被解压后的文件也可能会耗费更多的内存，对于**PNG**格式，加载时间要长于**JPEG**格式，但是解压要比**JPEG**快，Xcode也推荐在工程中用PNG格式
+* 解决延迟解压的方案
+	* 最简单的避免延迟解压的方式是使用**UIImage +imageNamed:**方法。这个方法在加载后直接解压，不过它只能工作在图片放在资源bundle中的情况
+	* 另一个方法是给layer的**content**赋值，或者给UIImageView的**image**属性赋值。不过这些方法都需要在主线程上完成
+	* 第三个方法是使用ImageIO框架
+
+```
+	NSInteger index = indexPath.row;
+	NSURL *imageURL = [NSURL fileURLWithPath:self.imagePaths[index]]; 
+	NSDictionary *options = @{(__bridge id)kCGImageSourceShouldCache: @YES}; 
+	CGImageSourceRef source = CGImageSourceCreateWithURL((__bridge CFURLRef)imageURL, NULL);
+	CGImageRef imageRef = CGImageSourceCreateImageAtIndex(source, 0, (__bridge CFDictionaryRef)options);
+	UIImage *image = [UIImage imageWithCGImage:imageRef]; CGImageRelease(imageRef);
+	CFRelease(source);
+```
+
+它可以让你通过kCGImageSourceShouldCache，它会立即解压
+	* 第四种方法，使用UIKit，然后将它立即绘制在CGContext中，采用这种方式的好处是可以将它放在其它线程上去，不会阻塞主线程
+* 如果不能用**imageNamed：**次优方法应该是**CGContext**
+
+```
+	dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+		//load image
+		NSInteger index = indexPath.row;
+		NSString *imagePath = self.imagePaths[index];
+		UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
+		//redraw image using device context
+		UIGraphicsBeginImageContextWithOptions(imageView.bounds.size, YES, 0); [image drawInRect:imageView.bounds];
+		image = UIGraphicsGetImageFromCurrentImageContext(); UIGraphicsEndImageContext();
+		//set image on main thread, but only if index still matches up
+		dispatch_async(dispatch_get_main_queue(), ^{
+			if (index == imageView.tag) {
+				imageView.image = image; 
+			}
+		}); 
+	});
+```
+
+* cache
+* **imageNamed:**可以用于缓存后以后在用
+* NSCache
+
+```
+- (UIImage *)loadImageAtIndex:(NSUInteger)index {
+	//set up cache
+	static NSCache *cache = nil; 
+	if (!cache) {
+		cache = [[NSCache alloc] init]; 
+	}
+	//if already cached, return immediately
+	UIImage *image = [cache objectForKey:@(index)]; 
+	if (image) {
+		return [image isKindOfClass:[NSNull class]]? nil: image; 
+	}
+	//set placeholder to avoid reloading image multiple times
+	[cache setObject:[NSNull null] forKey:@(index)];
+	//switch to background thread
+	dispatch_async( dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+		//load image
+		NSString *imagePath = self.imagePaths[index];
+		UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
+		//redraw image using device context
+		UIGraphicsBeginImageContextWithOptions(image.size, YES, 0); 
+		[image drawAtPoint:CGPointZero];
+		image = UIGraphicsGetImageFromCurrentImageContext(); 
+		UIGraphicsEndImageContext();
+		//set image for correct image view
+		dispatch_async(dispatch_get_main_queue(), ^{ //cache the image
+			[cache setObject:image forKey:@(index)];
+			//display the image
+			NSIndexPath *indexPath = [NSIndexPath indexPathForItem:
+			index inSection:0]; 
+			UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath]; 
+			UIImageView *imageView = [cell.contentView.subviews lastObject]; 
+			imageView.image = image;
+		}); 
+	});
+	//not loaded yet
+	return nil; 
+}
+```
+
+### layer性能
+* 非显示重绘
+	* CATextLayer和UILabel都是将文本绘制在layer的backing image上，它们的绘制都是CPU重绘，建议不要经常改变他们的尺寸
+	* shouldRasterize属性是为了避免在非常复杂的子layer上重绘耗费大量的时间，而将这些子layer和自己做成一幅离屏图片，如果这些内容会经常变化，就失去了它的意义
+	* 圆角layer，mask，shadow都会造成离屏渲染
+
